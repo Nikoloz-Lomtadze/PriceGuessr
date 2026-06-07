@@ -1,0 +1,3 @@
+EBAY_CLIENT_ID = "NikolozL-Pricegue-PRD-69955dd39-32531ced"
+EBAY_CLIENT_SECRET = "PRD-9955dd39770c-097d-47fb-aaf7-e4f8"
+EBAY_ENVIRONMENT = "production"
