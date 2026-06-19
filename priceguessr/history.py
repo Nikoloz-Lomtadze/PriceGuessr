@@ -6,7 +6,7 @@ class MatchHistory:
         conn = self.database.connect()
         cursor = conn.cursor()
         prompt = """Select * FROM games where user_id = ? order by played_at DESC Limit 10"""
-        cursor.execute(prompt,user_id)
+        cursor.execute(prompt, (user_id,))
         rows = cursor.fetchall()
         conn.close()
         matches = []

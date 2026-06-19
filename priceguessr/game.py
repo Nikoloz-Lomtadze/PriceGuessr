@@ -4,10 +4,10 @@ class GameManager:
         self.database = database
         self.item_provider = item_provider
         self.round_per_game = 10
-    def start_game(self,user_id,mode):
+    def start_game(self,user_id,mode,category = None):
         rounds = []
         for i in range(1,self.round_per_game+1):
-            left_item,right_item = self.item_provider.get_two_items()
+            left_item,right_item = self.item_provider.get_two_items(category)
             Game_round = Gameround(i,left_item,right_item)
             rounds.append(Game_round)
         session = GameSession(user_id,mode,rounds)

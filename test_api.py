@@ -1,32 +1,28 @@
 from Config import EBAY_CLIENT_ID, EBAY_CLIENT_SECRET, EBAY_ENVIRONMENT
 
-from priceguessr.database import Database
-from priceguessr.auth import AuthManager
-from priceguessr.ebay_api import EbayApi
-from priceguessr.items import EbayItemProvider
-from priceguessr.game import GameManager
-from priceguessr.models import Gamemodes,Matchrecord
+from priceguessr.service import PriceGuessrService
+from priceguessr.models import Gamemodes
 
 
-database = Database("priceguessr.db")
-auth = AuthManager(database)
+service = PriceGuessrService(
+    "priceguessr.db",
+    EBAY_CLIENT_ID,
+    EBAY_CLIENT_SECRET,
+    EBAY_ENVIRONMENT
+)
 
+user = service.login("service_test", "123")
 
 if user is None:
-    user = auth.signup("test", "123")
-    print("Test user created")
+    user = service.signup("service_test", "123")
+    print("User created")
 else:
-    print("Test user logged in")
+    print("User logged in")
 
-api = EbayApi(EBAY_CLIENT_ID, EBAY_CLIENT_SECRET, EBAY_ENVIRONMENT)
-item_provider = EbayItemProvider(api)
+session = service.start_game(user.user_id, Gamemodes.Singleplayer)
 
-game_manager = GameManager(database, item_provider)
-
-session = game_manager.start_game(user.user_id, Gamemodes.Singleplayer)
-
-print("Game started")
-print("Rounds created:", len(session.rounds))
+print("Game started from service")
+print("Rounds:", len(session.rounds))
 
 while not session.is_finished():
     current_round = session.get_current_round()
@@ -36,34 +32,31 @@ while not session.is_finished():
     print("Left:", current_round.left_item.name, "-", current_round.left_item.price)
     print("Right:", current_round.right_item.name, "-", current_round.right_item.price)
 
-    # For testing, always choose left item
-    result = game_manager.submit_guess(session, current_round.left_item)
+    # automatic test choice
+    result = service.submit_guess(session, current_round.left_item)
 
     if result.correct:
-        print("Result: Correct")
+        print("Correct")
     else:
-        print("Result: Wrong")
+        print("Wrong")
 
-    print("Correct item:", result.correct_item.name)
-    print("Current score:", session.score)
-    print("Rounds won:", session.rounds_won)
+    print("Score:", session.score)
 
 print()
 print("Game finished")
 print("Final score:", session.score)
 print("Rounds won:", session.rounds_won)
 
-conn = database.connect()
-cursor = conn.cursor()
+print()
+print("History:")
+history = service.get_history(user.user_id)
 
-cursor.execute("SELECT COUNT(*) AS count FROM games")
-games_count = cursor.fetchone()["count"]
-
-cursor.execute("SELECT COUNT(*) AS count FROM game_rounds")
-rounds_count = cursor.fetchone()["count"]
-
-conn.close()
+for match in history:
+    print(match.match_id, match.mode, match.rounds_won, match.points_count)
 
 print()
-print("Saved games in database:", games_count)
-print("Saved rounds in database:", rounds_count)
+print("Analytics:")
+analytics = service.get_analytics(user.user_id)
+
+for row in analytics:
+    print(row)
