@@ -1,31 +1,40 @@
 from priceguessr.models import Users
+## კოდი აუტემფიკაციის log in  Sign up
 
 class AuthManager:
-    def __init__(self,database):
+    def __init__(self, database): # ბაზის ობიექტი
         self.database = database
 
-    def signup(self,username,password):
+    def signup(self, username, password): #Sign up
         conn = self.database.connect()
-        cursor = conn.cursor()
-        prompt = """
-        INSERT INTO users (username,password) VALUES (?,?)
-        """
-        cursor.execute(prompt,(username,password))
-        conn.commit()
-        user_id = cursor.lastrowid
-        conn.close()
-        return Users(user_id,username)
-    def login(self,username,password):
+        try:  # ამატებს ახალ მომხმარებელს
+            cursor = conn.cursor()
+            prompt = """
+            INSERT INTO users (username, password) VALUES (?, ?)
+            """
+            cursor.execute(prompt, (username, password))
+            conn.commit()
+            return Users(cursor.lastrowid, username) # გვიბრუნებს მომხმარებლის ობიექტს id,usernmae
+        
+            # lastrowid ახლად დამატებული row-ს  აიდი
+        finally:
+            conn.close()
+
+    def login(self, username, password): #login
         conn = self.database.connect()
-        cursor = conn.cursor()
-        prompt = """
-        Select * from users where users.username = ? AND users.password = ?
-        """
-        cursor.execute(prompt,(username,password))
-        row = cursor.fetchone()
-        conn.close()
+        try:
+            cursor = conn.cursor()
+            #ვეძებთ ცხრილში რომ მომხმარებელი და პაროლი ერთი იყოს
+            prompt = """    
+            SELECT * FROM users
+            WHERE username = ? AND password = ?
+            """ 
+            cursor.execute(prompt, (username, password))
+            row = cursor.fetchone() #
+        finally:
+            conn.close()
+
         if row is None:
             return None
-        return Users(row['id'],row['username'])
 
-        
+        return Users(row["id"], row["username"]) # აქაც ვაბრუნებთ აიდის და მომხმარებელს
