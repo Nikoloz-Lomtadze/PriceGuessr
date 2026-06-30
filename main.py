@@ -1,27 +1,28 @@
 import sqlite3
 import sys
-
-from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QLineEdit,
-                             QPushButton, QHBoxLayout, QVBoxLayout, QFrame,
-                             QStackedWidget, QMessageBox, QMainWindow,
-                             QInputDialog)
+from PyQt5.QtWidgets import (QApplication,QWidget,QLabel,QLineEdit,QPushButton,QHBoxLayout,QVBoxLayout,QFrame,QStackedWidget,QMessageBox,QMainWindow,QInputDialog, QGridLayout)
 from PyQt5.QtGui import QPalette, QBrush, QPixmap, QIcon, QPainter
 from PyQt5.QtCore import Qt, QSize, QEvent
-
 from Config import EBAY_CLIENT_ID, EBAY_CLIENT_SECRET, EBAY_ENVIRONMENT
+from priceguessr.audio import AudioManager
 from priceguessr.models import Gamemodes
 from priceguessr.paths import DATABASE_PATH, asset_path
 from priceguessr.service import PriceGuessrService
 from priceguessr.ui.active_game import ActiveGameScreen
+from priceguessr.ui.analytics_screen import AnalyticsScreen
+from priceguessr.ui.history_screen import GameHistoryScreen
 from priceguessr.ui.result_screen import ResultScreen
+# მოცემული კოდის ფაილი არის ერთ-ერთი მთავარი და აერთიანებს ყველაფერს რათა გაუშვას აპპლიკაცია
 
 class MainMenu(QWidget):
-    """Login, tutorial, and game-mode selection screen."""
+
 
     def __init__(self, main_stack=None):
         super().__init__()
         self.main_stack = main_stack
         self.game_page = None
+        self.analytics_page = None
+        self.history_page = None
         self.service = PriceGuessrService(
             str(DATABASE_PATH),
             EBAY_CLIENT_ID,
@@ -197,8 +198,8 @@ class MainMenu(QWidget):
 
         login_widget = QWidget()
         login_layout = QVBoxLayout(login_widget)
-        login_layout.setContentsMargins(0, 20, 0, 10)
-        login_layout.setSpacing(10)
+        login_layout.setContentsMargins(0, 5, 0, 5)
+        login_layout.setSpacing(5)
 
         login_title = QLabel("ENTER YOUR NAME")
         login_title.setStyleSheet("font-size: 26px; color: #a385cc; font-weight: bold;")
@@ -206,39 +207,52 @@ class MainMenu(QWidget):
 
         self.login_name_input = QLineEdit()
         self.login_name_input.setPlaceholderText("Enter username...")
-        self.login_name_input.setFixedSize(460, 65)
+        self.login_name_input.setFixedSize(460, 55)
         login_layout.addWidget(self.login_name_input, alignment=Qt.AlignCenter)
 
         self.login_password_input = QLineEdit()
         self.login_password_input.setPlaceholderText("Enter password...")
         self.login_password_input.setEchoMode(QLineEdit.Password)
-        self.login_password_input.setFixedSize(460, 65)
+        self.login_password_input.setFixedSize(460, 55)
         login_layout.addWidget(self.login_password_input, alignment=Qt.AlignCenter)
 
         login_layout.addSpacing(5)
 
         btn_start_game = QPushButton()
         btn_start_game.setIcon(QIcon(asset_path("start-button.png")))
-        btn_start_game.setIconSize(QSize(510, 143))
-        btn_start_game.setFixedSize(510, 143)
+        btn_start_game.setIconSize(QSize(460, 105))
+        btn_start_game.setFixedSize(460, 105)
         login_layout.addWidget(btn_start_game, alignment=Qt.AlignCenter)
 
-        sub_buttons_login = QHBoxLayout()
-        sub_buttons_login.setSpacing(20)
+        sub_buttons_login = QGridLayout()
+        sub_buttons_login.setHorizontalSpacing(20)
+        sub_buttons_login.setVerticalSpacing(5)
         sub_buttons_login.setAlignment(Qt.AlignCenter)
 
         btn_action_signup = QPushButton()
         btn_action_signup.setIcon(QIcon(asset_path("sign-up-button.png")))
-        btn_action_signup.setIconSize(QSize(220, 83))
-        btn_action_signup.setFixedSize(220, 83)
+        btn_action_signup.setIconSize(QSize(220, 65))
+        btn_action_signup.setFixedSize(220, 65)
+
+        btn_analytics = QPushButton()
+        btn_analytics.setIcon(QIcon(asset_path("analytics-button.png")))
+        btn_analytics.setIconSize(QSize(220, 65))
+        btn_analytics.setFixedSize(220, 65)
+
+        btn_history = QPushButton()
+        btn_history.setIcon(QIcon(asset_path("game-history-button.png")))
+        btn_history.setIconSize(QSize(220, 65))
+        btn_history.setFixedSize(220, 65)
 
         btn_exit_app1 = QPushButton()
         btn_exit_app1.setIcon(QIcon(asset_path("exit-button.png")))
-        btn_exit_app1.setIconSize(QSize(220, 83))
-        btn_exit_app1.setFixedSize(220, 83)
+        btn_exit_app1.setIconSize(QSize(220, 65))
+        btn_exit_app1.setFixedSize(220, 65)
 
-        sub_buttons_login.addWidget(btn_action_signup)
-        sub_buttons_login.addWidget(btn_exit_app1)
+        sub_buttons_login.addWidget(btn_action_signup, 0, 0)
+        sub_buttons_login.addWidget(btn_analytics, 0, 1)
+        sub_buttons_login.addWidget(btn_history, 1, 0)
+        sub_buttons_login.addWidget(btn_exit_app1, 1, 1)
         login_layout.addLayout(sub_buttons_login)
         self.page_switcher.addWidget(login_widget)
 
@@ -553,10 +567,26 @@ class MainMenu(QWidget):
         btn_exit_app1.clicked.connect(QApplication.instance().quit)
         btn_exit_app2.clicked.connect(QApplication.instance().quit)
         btn_close_popup.clicked.connect(close_game_modes)
+        btn_analytics.clicked.connect(self.show_analytics)
+        btn_history.clicked.connect(self.show_history)
 
     def show_mode_popup(self):
         self.popup_overlay.show()
         self.popup_overlay.raise_()
+
+    def show_analytics(self):
+        if self.current_user is None:
+            QMessageBox.warning(self, "Analytics", "Log in to view your analytics.")
+            return
+        self.analytics_page.refresh(self.service, self.current_user.user_id)
+        self.main_stack.setCurrentWidget(self.analytics_page)
+
+    def show_history(self):
+        if self.current_user is None:
+            QMessageBox.warning(self, "Game History", "Log in to view your game history.")
+            return
+        self.history_page.refresh(self.service, self.current_user.user_id)
+        self.main_stack.setCurrentWidget(self.history_page)
 
     def handle_login(self):
         username = self.login_name_input.text().strip()
@@ -732,16 +762,24 @@ class GameMainWindow(QMainWindow):
 
         self.main_stack = QStackedWidget()
         self.setCentralWidget(self.main_stack)
+        self.audio = AudioManager(self)
 
         self.menu_page = MainMenu(self.main_stack)
+        self.menu_page.audio = self.audio
         self.game_page = ActiveGameScreen(self.menu_page, self.main_stack)
         self.result_page = ResultScreen(self.main_stack)
+        self.analytics_page = AnalyticsScreen(self.main_stack, self.menu_page)
+        self.history_page = GameHistoryScreen(self.main_stack, self.menu_page)
         self.game_page.result_page = self.result_page
         self.menu_page.game_page = self.game_page
+        self.menu_page.analytics_page = self.analytics_page
+        self.menu_page.history_page = self.history_page
 
         self.main_stack.addWidget(self.menu_page)
         self.main_stack.addWidget(self.game_page)
         self.main_stack.addWidget(self.result_page)
+        self.main_stack.addWidget(self.analytics_page)
+        self.main_stack.addWidget(self.history_page)
         self.main_stack.setCurrentWidget(self.menu_page)
 
         self.background_pixmap = QPixmap(asset_path("background.png"))
@@ -753,5 +791,6 @@ class GameMainWindow(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = GameMainWindow()
+    app.aboutToQuit.connect(ex.audio.shutdown)
     ex.show()
     sys.exit(app.exec_())

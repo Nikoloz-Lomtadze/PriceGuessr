@@ -4,27 +4,34 @@ from priceguessr.models import *
 
 class MultiplayerManager:
     def __init__(self, database, item_provider):
+
         self.database = database
         self.game_manager = GameManager(database, item_provider) ## game manager ობიექტი
 
     def start_game(self, player_one_id, player_two_id, category=None): # თამაშის დაწყება
+        
         if player_one_id == player_two_id:
             raise ValueError("multiplayer requires two different users") # უნდა იყოს ორი განსხვავებული მოთამაშე
 
         self.check_user_exists(player_one_id)
         self.check_user_exists(player_two_id)
         rounds = self.game_manager.create_rounds(category) #ვქმნით რაუნდების ლისტს (id,first item,second item)
+        
         return MultiplayerGameSession(player_one_id, player_two_id, rounds) # იქმნება მულტიპლეიერის ობიექტი 
 
     def submit_guess(self, session, player_number, chosen_item):
+
         if session.is_finished():
             raise ValueError("game is finished") #თამაში არ უნდა იყოს დსრულებული
+        
         if player_number not in [1, 2]:
             raise ValueError("player number must be 1 or 2") # მოთამაშე ან პირველია ან მეორე
+        
         if player_number in session.pending_guesses: #ერთხელ უნდ ააირჩიო ერთ რაუნდში
             raise ValueError("this player already guessed in the current round")
 
         game_round = session.get_current_round() #იმ წამიერი რაუნდი
+        
         if chosen_item.id not in [game_round.left_item.id, game_round.right_item.id]: #ვამოწმებთ ორიდან ერთი თუ ავირჩიეთ
             raise ValueError("chosen item is not part of this round")
 
@@ -36,7 +43,7 @@ class MultiplayerManager:
         player_one_result = self.game_manager.create_result(
             game_round,
             session.pending_guesses[1] # ვამოწმებთ 1 მოთამაშის არჩეული სწორია თუ არა
-        )
+         )
         player_two_result = self.game_manager.create_result(
             game_round,  # მეორე მოთამაშის არჩეული თუ სწორია
             session.pending_guesses[2]
@@ -53,11 +60,15 @@ class MultiplayerManager:
         session.round_results.append(player_one_result)
         session.player_two_results.append(player_two_result)
         session.pending_guesses.clear()
+
         session.current_round += 1 # გადავდივართ შემდეგ რაუნდზე
 
         winner = None
+
         if session.is_finished():
+
             winner = self.get_winner(session)
+
             self.save_multiplayer_game(session, winner) # ვიმახსოვრებთ ვინ მოიგო და მონაცემებს
 
         return MultiplayerRoundResult(
@@ -82,13 +93,14 @@ class MultiplayerManager:
         player_one_game_id = self.game_manager.save_game(
             session,
             player_one_won
-        )
+            )
 
         player_two_session = GameSession(
             session.player_two_id,
             Gamemodes.Multiplayer,
             session.rounds
         )
+
         player_two_session.current_round = len(session.rounds)
         player_two_session.score = session.player_two_score
         player_two_session.rounds_won = session.player_two_rounds_won
@@ -111,9 +123,7 @@ class MultiplayerManager:
         # ვამატებთ ისტორიას ბაზაში
         cursor.execute(
             """
-            INSERT INTO multiplayer_matches (
-                player_one_game_id, player_two_game_id, winner_user_id
-            )
+            INSERT INTO multiplayer_matches (player_one_game_id, player_two_game_id, winner_user_id)
             VALUES (?, ?, ?)
             """,
             (player_one_game_id, player_two_game_id, winner_user_id)
@@ -122,10 +132,12 @@ class MultiplayerManager:
         conn.close()
 
     def check_user_exists(self, user_id): # сhecking if user is real
+
         conn = self.database.connect()
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
         row = cursor.fetchone()
+        
         conn.close()
 
         if row is None:

@@ -1,14 +1,11 @@
 import requests
-
-from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QPushButton,
-                             QHBoxLayout, QVBoxLayout, QFrame, QMessageBox,
-                             QGridLayout)
+from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QPushButton,QHBoxLayout, QVBoxLayout, QFrame, QMessageBox,QGridLayout)
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt, QSize, QTimer
-
 from priceguessr.models import Gamemodes
 from priceguessr.paths import asset_path
 
+# მოცემული კოდი ემსახურება აქტიური თამაშის სქრინს
 
 class ActiveGameScreen(QWidget):
     """Shared game screen for solo, bot, and local multiplayer modes."""
@@ -331,6 +328,11 @@ class ActiveGameScreen(QWidget):
             round_result = result
             bot_message = ""
 
+        if timed_out or not round_result.correct:
+            self.menu_page.audio.play_incorrect()
+        else:
+            self.menu_page.audio.play_correct()
+
         self.set_score_counter(self.session.score)
         left_price = round_result.left_item.price
         right_price = round_result.right_item.price
@@ -392,6 +394,10 @@ class ActiveGameScreen(QWidget):
         self.set_score_counter(self.session.score)
         player_one_result = result.player_one_result
         player_two_result = result.player_two_result
+        if player_one_result.correct or player_two_result.correct:
+            self.menu_page.audio.play_correct()
+        else:
+            self.menu_page.audio.play_incorrect()
         left_price = player_one_result.left_item.price
         right_price = player_one_result.right_item.price
 

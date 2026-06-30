@@ -15,7 +15,6 @@ class AuthManager:
             cursor.execute(prompt, (username, password))
             conn.commit()
             return Users(cursor.lastrowid, username) # გვიბრუნებს მომხმარებლის ობიექტს id,usernmae
-        
             # lastrowid ახლად დამატებული row-ს  აიდი
         finally:
             conn.close()
@@ -36,5 +35,4 @@ class AuthManager:
 
         if row is None:
             return None
-
         return Users(row["id"], row["username"]) # აქაც ვაბრუნებთ აიდის და მომხმარებელს

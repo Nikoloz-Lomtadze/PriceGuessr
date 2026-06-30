@@ -1,17 +1,18 @@
 import random
-
 from priceguessr.game import GameManager
 from priceguessr.models import BotGameSession, BotRoundResult
 
 
 class BotManager:
     def __init__(self, database, item_provider, accuracy=0.67): #აქ შეგვიძლია შევცვალოთ თუ რამდენად სწორად იცნობს ბოტი
+        
         self.database = database
         self.game_manager = GameManager(database, item_provider) # gamemanager object
         self.accuracy = accuracy
 
     def start_game(self, user_id, category=None): # კატეგორია მერე ჩაეწერება
         rounds = self.game_manager.create_rounds(category) # რაუნდების ლისტი ნივთებით
+        
         return BotGameSession(user_id, rounds) # ბოტის სესიის ობიექტი
 
     def submit_guess(self, session, chosen_item):
@@ -31,8 +32,8 @@ class BotManager:
 
         bot_correct = bot_chosen_item.id == correct_item.id #რეგისტრაცია იმის სწორია თუ არა და ქულების განსაზღვრა
         bot_points = 10 if bot_correct else 0
-
         session.score += user_result.points_earned # მოგებული რაუნდების დამატება
+        
         if user_result.correct:
             session.rounds_won += 1
 
@@ -71,11 +72,8 @@ class BotManager:
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO bot_games
-                (game_id, bot_score, bot_rounds_won, winner)
-            VALUES (?, ?, ?, ?)
-            """,
-            (game_id, session.bot_score, session.bot_rounds_won, winner)
+            INSERT INTO bot_games (game_id, bot_score, bot_rounds_won, winner) VALUES (?, ?, ?, ?)
+            """,(game_id, session.bot_score, session.bot_rounds_won, winner)
         )
         conn.commit()
         conn.close()

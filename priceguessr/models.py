@@ -1,14 +1,12 @@
 from enum import Enum
 #ჩვენ ამ ფაილში ვქმნით ობიექტებს თამაშისთვის
-
 # str, Enum - ის მეშვეობით ჩვენ გვაქვს ფიქსირებული მონაცემები რომლებიც იქცევიან
 # როგორც სტრინგები
 class Gamemodes(str, Enum): # თამაშის მოდების ვარიანტები
+
     Singleplayer = "singleplayer"
     Multiplayer = "multiplayer"
     vsbot = "vsbot"
-
-
 class Users: # იუსერის ობიექტი
     def __init__(self, user_id, username):
         self.user_id = user_id

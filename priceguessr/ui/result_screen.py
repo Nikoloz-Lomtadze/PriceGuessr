@@ -1,15 +1,12 @@
 import os
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QPixmap
-from PyQt5.QtWidgets import (QGraphicsDropShadowEffect, QHBoxLayout, QLabel,
-                             QPushButton, QVBoxLayout, QWidget)
-
+from PyQt5.QtWidgets import (QGraphicsDropShadowEffect, QHBoxLayout, QLabel,QPushButton, QVBoxLayout, QWidget)
 from priceguessr.paths import asset_path
 
+# მოცემული კოდი ემსახურება შედეგის სქრინს
 
 class ResultScreen(QWidget):
-    """Shared result screen for solo, bot, and local multiplayer modes."""
 
     def __init__(self, main_stack):
         super().__init__()
