@@ -11,8 +11,8 @@ PriceGuessr არის OOP-პარადიგმაზე შექმნ�
 
 ## როგორ გავუშვათ ეს თამაში?
 1. დარწმუნდით რომ პითონი ინსტალირებულია (3.13) (winget install --exact --id Python.Python.3.13)
-2. გაუშვით ბრძანება ცონსოლში: py -m pip install -r requirements.txt 
-3. გაუშვით ბრძანება ასევე კონსოლში python main.py
+2. გაუშვით ბრძანება ცონსოლში: py -3.13 -m pip install -r requirements.txt 
+3. გაუშვით ბრძანება ასევე კონსოლში py -3.13 main.py
 
 ### გამოყენებული მოდულები
 - pyqt5 (ვიზუალი)
